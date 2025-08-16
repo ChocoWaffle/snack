@@ -239,6 +239,60 @@
             gap: 10px;
             margin-top: 15px;
         }
+        
+        .help-section {
+            background-color: #f1f5f9;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: left;
+            line-height: 1.5;
+        }
+        
+        .help-section summary {
+            font-weight: 600;
+            color: #1e293b;
+            cursor: pointer;
+            outline: none;
+            list-style: none; /* 기본 화살표 숨기기 */
+            position: relative;
+            padding-left: 1.5em;
+        }
+        
+        .help-section summary::before {
+            content: '+';
+            font-size: 1.5em;
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            transition: transform 0.2s ease-in-out;
+        }
+        
+        .help-section[open] summary::before {
+            content: '-';
+            transform: translateY(-50%);
+        }
+        
+        .help-section ul {
+            list-style-type: none;
+            padding-left: 0;
+            margin-top: 10px;
+        }
+        
+        .help-section li {
+            margin-bottom: 5px;
+            color: #475569;
+        }
+        
+        /* 대상 인원 세부 항목에 대한 스타일 */
+        .help-section ul ul {
+            padding-left: 10px;
+            border-left: 2px solid #cbd5e1;
+            margin-top: 5px;
+            list-style-type: '• '; /* 작은 원형 글머리 기호 */
+        }
+        
     </style>
 </head>
 <body>
@@ -246,6 +300,28 @@
     <div class="container">
         <h1>파워 N빵 계산기</h1>
         <p class="subtitle">그러게 한 사람이 몰빵해서 계산하자 했잖아</p>
+
+        <details class="help-section">
+            <summary>사용 방법</summary>
+            <ul>
+                <li><b>총 인원수:</b> 전체 정산할 인원 수를 입력합니다.</li>
+                <li><b>지불자 추가:</b> 버튼을 눌러 비용을 지불한 사람들을 한 명씩 추가합니다.</li>
+                <li><b>이름:</b> 지불한 사람의 이름을 입력합니다. (예: 철수)</li>
+                <li><b>금액:</b> 지불한 금액을 입력합니다.</li>
+                <li><b>대상 인원:</b> 이 비용을 나누어 낼 사람들을 지정합니다.
+                    <ul>
+                        <li><b>기본 N빵:</b> 이 칸을 비워두면 <b>'총 인원수'</b>에 입력된 인원수로 공평하게 나눕니다.</li>
+                        <li><b>특정 인원 N빵:</b> <code>영희, 민지, 수철</code>처럼 쉼표로 이름을 구분하면 해당 인원들끼리 공평하게 나눕니다.</li>
+                        <li><b>비율로 분배:</b> <code>영희:20, 민지:80</code>처럼 이름 뒤에 비율을 입력하면 해당 비율로 나눕니다. 비율을 입력하지 않은 사람은 남은 금액을 N빵으로 나눕니다. (예: <code>영희:50, 민지, 수철</code>)</li>
+                    </ul>
+                </li>
+                <li><b>계산하기:</b> 입력된 내용을 바탕으로 정산을 계산하고, 각자 얼마를 내고 받는지 결과를 보여줍니다.</li>
+                <li><b>결과 확인:</b> <b>최종 정산 행렬</b>에서 마우스를 올리면 어떤 지출 때문에 금액이 오고 가는지 보여줍니다.</li>
+                <li><b>이미지로 저장:</b> 최종 정산 결과를 이미지 파일로 다운로드합니다.</li>
+                <li><b>텍스트 복사:</b> 최종 정산 결과 텍스트만 클립보드에 복사합니다.</li>
+            </ul>
+        </details>
+
         <div class="input-group">
             <label for="totalPeople">총 인원수 (N)</label>
             <input type="number" id="totalPeople" placeholder="전체 인원" min="1" required>
