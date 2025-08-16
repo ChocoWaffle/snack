@@ -25,12 +25,13 @@
             max-width: 450px;
             text-align: center;
             border: 1px solid #e2e8f0;
+            position: relative; /* 팝업을 위한 상대 위치 설정 */
         }
 
         h1 {
             color: #1e293b;
             font-size: 1.75rem;
-            margin-bottom: 5px; /* 서브 제목과의 간격 조절 */
+            margin-bottom: 5px;
             font-weight: 700;
         }
 
@@ -82,21 +83,28 @@
             border-radius: 8px;
             font-size: 1rem;
             box-sizing: border-box;
+            cursor: pointer;
+        }
+
+        .payer-input-group input[type="number"] {
+            cursor: text;
         }
         
         .input-group {
             margin-bottom: 20px;
             text-align: left;
         }
-        
-        .input-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #475569;
-            font-weight: 500;
+
+        .input-group input, .input-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
         }
 
-        .input-group input:focus, .payer-input-group input:focus {
+        .input-group input:focus, .input-group textarea:focus, .payer-input-group input:focus {
             outline: none;
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
@@ -198,31 +206,13 @@
             margin-top: 15px;
             font-weight: 500;
         }
-        .balance-info {
-            font-weight: bold;
-            color: #1a73e8;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        .final-balance {
-            font-weight: bold;
-        }
-        .final-balance.positive {
-            color: #10b981;
-        }
-        .final-balance.negative {
-            color: #ef4444;
-        }
-        .highlight {
-            background-color: #fff9c4; /* 연한 노란색 하이라이트 */
-            transition: background-color 0.3s ease;
-        }
+        
         .highlight-add {
-            background-color: #c8e6c9; /* 연한 녹색 하이라이트 */
+            background-color: #c8e6c9;
             transition: background-color 0.3s ease;
         }
         .highlight-sub {
-            background-color: #ffcdd2; /* 연한 빨간색 하이라이트 */
+            background-color: #ffcdd2;
             transition: background-color 0.3s ease;
         }
 
@@ -232,7 +222,6 @@
             color: #64748b;
         }
         
-        /* 추가된 스타일: 버튼들 사이의 간격 */
         .result-actions {
             display: flex;
             flex-direction: column;
@@ -254,7 +243,7 @@
             color: #1e293b;
             cursor: pointer;
             outline: none;
-            list-style: none; /* 기본 화살표 숨기기 */
+            list-style: none;
             position: relative;
             padding-left: 1.5em;
         }
@@ -285,14 +274,148 @@
             color: #475569;
         }
         
-        /* 대상 인원 세부 항목에 대한 스타일 */
         .help-section ul ul {
             padding-left: 10px;
             border-left: 2px solid #cbd5e1;
             margin-top: 5px;
-            list-style-type: '• '; /* 작은 원형 글머리 기호 */
+            list-style-type: '• ';
+        }
+
+        /* 팝업 관련 스타일 */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0.3s, opacity 0.3s;
+        }
+
+        .popup-overlay.visible {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .popup {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 350px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            transform: scale(0.9);
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .popup.visible {
+            transform: scale(1);
         }
         
+        .popup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+
+        .popup-header h3 {
+            margin: 0;
+            font-size: 1.25rem;
+            color: #1e293b;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #94a3b8;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0;
+            transition: color 0.2s;
+        }
+
+        .close-btn:hover {
+            color: #64748b;
+        }
+        
+        .popup-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .popup-list-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background-color: #f8fafc;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .popup-list-item:hover {
+            background-color: #f1f5f9;
+        }
+
+        .popup-list-item input[type="radio"] {
+            margin-right: 10px;
+        }
+
+        .popup-list-item label {
+            flex-grow: 1;
+            cursor: pointer;
+        }
+
+        /* Target Popup 전용 스타일 */
+        .target-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background-color: #f8fafc;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+
+        .target-item input[type="checkbox"] {
+            width: auto;
+            margin-right: 0;
+        }
+
+        .target-item label {
+            flex-grow: 1;
+            font-weight: 500;
+        }
+
+        .target-item input[type="number"] {
+            width: 80px;
+            text-align: right;
+            padding: 6px 10px;
+            font-size: 0.9rem;
+        }
+        
+        .target-item.selected {
+            background-color: #e0f2fe;
+        }
+        
+        .popup-actions {
+            margin-top: 15px;
+        }
+
     </style>
 </head>
 <body>
@@ -304,17 +427,11 @@
         <details class="help-section">
             <summary>사용 방법</summary>
             <ul>
-                <li><b>총 인원수:</b> 전체 정산할 인원 수를 입력합니다.</li>
-                <li><b>지불자 추가:</b> 버튼을 눌러 비용을 지불한 사람들을 한 명씩 추가합니다.</li>
-                <li><b>이름:</b> 지불한 사람의 이름을 입력합니다. (예: 철수)</li>
+                <li><b>전체 참여자:</b> 정산에 참여할 모든 사람들의 이름을 쉼표(,)로 구분하여 입력합니다. (예: 철수, 영희, 민지)</li>
+                <li><b>지불자 추가:</b> 버튼을 눌러 비용을 지불한 사람들을 추가합니다.</li>
+                <li><b>이름/대상 인원:</b> 해당 입력란을 클릭하면 미리 입력한 전체 참여자 목록에서 간편하게 선택할 수 있습니다.</li>
                 <li><b>금액:</b> 지불한 금액을 입력합니다.</li>
-                <li><b>대상 인원:</b> 이 비용을 나누어 낼 사람들을 지정합니다.
-                    <ul>
-                        <li><b>기본 N빵:</b> 이 칸을 비워두면 <b>'총 인원수'</b>에 입력된 인원수로 공평하게 나눕니다.</li>
-                        <li><b>특정 인원 N빵:</b> <code>영희, 민지, 수철</code>처럼 쉼표로 이름을 구분하면 해당 인원들끼리 공평하게 나눕니다.</li>
-                        <li><b>비율로 분배:</b> <code>영희:20, 민지:80</code>처럼 이름 뒤에 비율을 입력하면 해당 비율로 나눕니다. 비율을 입력하지 않은 사람은 남은 금액을 N빵으로 나눕니다. (예: <code>영희:50, 민지, 수철</code>)</li>
-                    </ul>
-                </li>
+                <li><b>대상 인원:</b> 이 비용을 나누어 낼 사람들을 지정합니다. 팝업에서 여러 명을 선택하고, 각자 부담할 비율을 입력할 수 있습니다. (비율 미입력 시 N빵) (대상 인원을 아무도 선택하지 않으면 전체 참여자에게 N빵으로 분배됩니다.)</li>
                 <li><b>계산하기:</b> 입력된 내용을 바탕으로 정산을 계산하고, 각자 얼마를 내고 받는지 결과를 보여줍니다.</li>
                 <li><b>결과 확인:</b> <b>최종 정산 행렬</b>에서 마우스를 올리면 어떤 지출 때문에 금액이 오고 가는지 보여줍니다.</li>
                 <li><b>이미지로 저장:</b> 최종 정산 결과를 이미지 파일로 다운로드합니다.</li>
@@ -323,8 +440,8 @@
         </details>
 
         <div class="input-group">
-            <label for="totalPeople">총 인원수 (N)</label>
-            <input type="number" id="totalPeople" placeholder="전체 인원" min="1" required>
+            <label for="allParticipants">전체 참여자 이름 (쉼표로 구분)</label>
+            <textarea id="allParticipants" rows="2" placeholder="예: 철수, 영희, 민지" lang="ko"></textarea>
         </div>
         <div class="payer-input-container" id="dynamicInputs">
             <!-- 지불자 입력란이 여기에 동적으로 추가됩니다 -->
@@ -338,10 +455,36 @@
             <!-- 복사 버튼과 상태 메시지가 여기에 동적으로 추가됩니다 -->
         </div>
     </div>
+    
+    <!-- 지불자 이름 선택 팝업 -->
+    <div id="payerNamePopupOverlay" class="popup-overlay">
+        <div class="popup" id="payerNamePopup">
+            <div class="popup-header">
+                <h3>지불자 선택</h3>
+                <button class="close-btn" onclick="hidePopup('payerName')">&times;</button>
+            </div>
+            <div id="payerNameList" class="popup-list"></div>
+        </div>
+    </div>
+
+    <!-- 대상 인원 선택 팝업 -->
+    <div id="targetPopupOverlay" class="popup-overlay">
+        <div class="popup" id="targetPopup">
+            <div class="popup-header">
+                <h3>대상 인원 선택 및 비율 입력</h3>
+                <button class="close-btn" onclick="hidePopup('target')">&times;</button>
+            </div>
+            <div id="targetList" class="popup-list"></div>
+            <div class="popup-actions">
+                <button class="button" onclick="selectTargets()">선택 완료</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         // 고유한 지불자 ID를 위한 카운터
         let payerCount = 0;
+        let activeInput = null; // 현재 활성화된 입력 필드 추적
 
         /**
          * 새로운 지불자 이름, 금액, 대상 인원 입력란을 동적으로 추가합니다.
@@ -357,7 +500,7 @@
                 <div class="row">
                     <div>
                         <label for="name-${payerCount}">이름</label>
-                        <input type="text" id="name-${payerCount}" class="payer-name" placeholder="지불자 ${payerCount}" value="지불자 ${payerCount}" lang="ko" autofocus>
+                        <input type="text" id="name-${payerCount}" class="payer-name" placeholder="지불자 선택" readonly>
                     </div>
                     <div>
                         <label for="amount-${payerCount}">금액</label>
@@ -367,11 +510,15 @@
                 </div>
                 <div>
                     <label for="target-${payerCount}">대상 인원 (이름:비율, 이름:비율...)</label>
-                    <input type="text" id="target-${payerCount}" class="payer-target" placeholder="예: '철수:20, 영희:80' 혹은 '철수, 영희' (쉼표로 구분)" lang="ko">
+                    <input type="text" id="target-${payerCount}" class="payer-target" placeholder="대상 인원 선택" readonly>
                 </div>
             `;
             
             dynamicInputs.appendChild(newPayerDiv);
+
+            // 새로 추가된 입력 필드에 이벤트 리스너 추가
+            newPayerDiv.querySelector('.payer-name').addEventListener('click', (e) => showPopup('payerName', e.target));
+            newPayerDiv.querySelector('.payer-target').addEventListener('click', (e) => showPopup('target', e.target));
         }
 
         /**
@@ -392,7 +539,6 @@
          * @returns {string} 변환된 이름
          */
         function getSanitizedName(name) {
-            // 공백과 특수 문자를 하이픈으로 대체합니다.
             return name.replace(/\s+/g, '-').replace(/[^\w\-가-힣ㄱ-ㅎㅏ-ㅣ]/g, '');
         }
 
@@ -402,9 +548,6 @@
          * @param {string} to - 받을 사람 이름 (Matrix 2의 열)
          */
         function highlightSources(from, to) {
-            console.info(`from : ${from}', to : ${to}`)
-            // Matrix 2 셀의 계산 공식: matrix2[from][to] = matrix1[to][from] - matrix1[from][to]
-            // 따라서 하이라이트할 Matrix 1 셀은 matrix1[to][from]과 matrix1[from][to] 입니다.
             const sanitizedFrom = getSanitizedName(from);
             const sanitizedTo = getSanitizedName(to);
             
@@ -448,6 +591,21 @@
                 const from = targetCell.dataset.row;
                 const to = targetCell.dataset.col;
                 removeHighlight(from, to);
+            }
+        }
+        
+        /**
+         * Matrix 2 셀에 마우스 오버 시 호출되는 이벤트 핸들러
+         */
+        function handleMouseOver(event) {
+            const targetCell = event.target.closest('td');
+            if (targetCell && targetCell.dataset.row && targetCell.dataset.col) {
+                const from = targetCell.dataset.row;
+                const to = targetCell.dataset.col;
+                const amount = parseInt(targetCell.textContent.replace(/,/g, ''));
+                if (amount > 0) {
+                    highlightSources(from, to);
+                }
             }
         }
 
@@ -525,41 +683,166 @@
         }
 
         /**
+         * 팝업을 표시하고 내용을 동적으로 생성합니다.
+         * @param {string} type - 'payerName' 또는 'target'
+         * @param {HTMLElement} inputElement - 클릭된 입력 필드
+         */
+        function showPopup(type, inputElement) {
+            const allParticipantsInput = document.getElementById('allParticipants').value.trim();
+            if (!allParticipantsInput) {
+                // 경고 메시지 표시 또는 사용자에게 알림
+                const resultDiv = document.getElementById('result');
+                resultDiv.innerHTML = `<p class="error-message"><b>오류:</b> 전체 참여자 이름을 먼저 입력해주세요.</p>`;
+                return;
+            }
+            
+            activeInput = inputElement;
+            const popupOverlay = document.getElementById(`${type}PopupOverlay`);
+            const listContainer = document.getElementById(`${type}List`);
+            const allParticipants = allParticipantsInput.split(',').map(name => name.trim()).filter(name => name.length > 0);
+            
+            listContainer.innerHTML = '';
+            
+            if (type === 'payerName') {
+                allParticipants.forEach(name => {
+                    const listItem = document.createElement('div');
+                    listItem.className = 'popup-list-item';
+                    listItem.innerHTML = `<label>${name}</label>`;
+                    listItem.onclick = () => selectPayerName(name);
+                    listContainer.appendChild(listItem);
+                });
+            } else if (type === 'target') {
+                const currentTargets = activeInput.value.split(',').map(s => {
+                    const [name, ratio] = s.split(':').map(val => val.trim());
+                    return { name: name, ratio: ratio };
+                }).filter(s => s.name.length > 0);
+                
+                allParticipants.forEach(name => {
+                    const isSelected = currentTargets.some(target => target.name === name);
+                    const currentRatio = isSelected ? (currentTargets.find(target => target.name === name).ratio || '') : '';
+                    
+                    const listItem = document.createElement('div');
+                    listItem.className = `target-item ${isSelected ? 'selected' : ''}`;
+                    listItem.innerHTML = `
+                        <input type="checkbox" id="target-${name}" value="${name}" ${isSelected ? 'checked' : ''}>
+                        <label for="target-${name}">${name}</label>
+                        <input type="number" class="target-ratio" placeholder="비율 (%)" min="0" max="100" value="${currentRatio}">
+                    `;
+                    
+                    const checkbox = listItem.querySelector('input[type="checkbox"]');
+                    const ratioInput = listItem.querySelector('input[type="number"]');
+
+                    checkbox.addEventListener('change', (e) => {
+                        listItem.classList.toggle('selected', e.target.checked);
+                    });
+
+                    listContainer.appendChild(listItem);
+                });
+            }
+            
+            popupOverlay.classList.add('visible');
+        }
+
+        /**
+         * 팝업을 숨깁니다.
+         * @param {string} type - 'payerName' 또는 'target'
+         */
+        function hidePopup(type) {
+            const popupOverlay = document.getElementById(`${type}PopupOverlay`);
+            popupOverlay.classList.remove('visible');
+            activeInput = null;
+        }
+
+        /**
+         * 지불자 이름을 선택하고 팝업을 숨깁니다.
+         * @param {string} name - 선택된 이름
+         */
+        function selectPayerName(name) {
+            if (activeInput) {
+                activeInput.value = name;
+                hidePopup('payerName');
+            }
+        }
+        
+        /**
+         * 대상 인원 선택을 완료하고 입력 필드를 업데이트합니다.
+         */
+        function selectTargets() {
+            if (!activeInput) return;
+
+            const targetListItems = document.querySelectorAll('#targetList .target-item');
+            const selectedTargets = [];
+            
+            targetListItems.forEach(item => {
+                const checkbox = item.querySelector('input[type="checkbox"]');
+                const ratioInput = item.querySelector('input[type="number"]');
+
+                if (checkbox.checked) {
+                    const name = checkbox.value;
+                    let value = name;
+                    const ratio = ratioInput.value.trim();
+                    if (ratio && !isNaN(parseFloat(ratio)) && parseFloat(ratio) > 0) {
+                        value += `:${ratio}`;
+                    }
+                    selectedTargets.push(value);
+                }
+            });
+
+            activeInput.value = selectedTargets.join(', ');
+            hidePopup('target');
+        }
+        
+        /**
          * 정산을 계산하는 메인 함수.
          * 모든 동적 입력값을 읽어 잔액을 계산하고 정산 내역을 표시합니다.
          */
         function calculate() {
-            const totalPeople = parseInt(document.getElementById('totalPeople').value);
+            const allParticipantsInput = document.getElementById('allParticipants').value.trim();
             const resultContainer = document.getElementById('result-container');
-            resultContainer.innerHTML = `
-                <div class="result-box" id="result">
-                    <p>결과가 여기에 표시됩니다.</p>
-                </div>
-            `;
             const resultDiv = document.getElementById('result');
             
-            const errors = []; // 오류를 담을 배열
-
-            if (isNaN(totalPeople) || totalPeople <= 0) {
-                errors.push('총 인원수를 올바르게 입력해주세요.');
+            // 결과 영역 초기화
+            resultDiv.innerHTML = `<p>결과가 여기에 표시됩니다.</p>`;
+            // 기존에 있던 버튼 및 메시지 제거
+            const existingActions = resultContainer.querySelector('.result-actions');
+            const existingStatus = resultContainer.querySelector('#copy-status');
+            if (existingActions) existingActions.remove();
+            if (existingStatus) existingStatus.remove();
+            
+            const errors = [];
+            let allParticipants = [];
+            if (allParticipantsInput) {
+                allParticipants = allParticipantsInput.split(',').map(name => name.trim()).filter(name => name.length > 0);
             }
+            
+            if (allParticipants.length === 0) {
+                errors.push('전체 참여자 이름을 한 명 이상 입력해주세요.');
+            }
+            
+            // --- 유효성 검증 추가: 중복된 참여자 이름 확인 ---
+            const uniqueParticipants = new Set(allParticipants);
+            if (uniqueParticipants.size !== allParticipants.length) {
+                const duplicates = allParticipants.filter((item, index) => allParticipants.indexOf(item) !== index);
+                const uniqueDuplicates = [...new Set(duplicates)];
+                errors.push(`중복된 참여자 이름이 있습니다: <b>${uniqueDuplicates.join(', ')}</b>`);
+            }
+            // --------------------------------------------------
 
             const payerInputs = document.querySelectorAll('.payer-input-group');
-            
             const payments = [];
-            const allPayerNames = new Set();
             
-            // 입력값 유효성 검사 및 데이터 수집
             for (const inputDiv of payerInputs) {
                 const name = inputDiv.querySelector('.payer-name').value.trim();
                 const amount = parseInt(inputDiv.querySelector('.payer-amount').value);
                 const targetString = inputDiv.querySelector('.payer-target').value.trim();
 
+                if (!name) {
+                    errors.push('지불자의 이름을 선택해주세요.');
+                }
                 if (isNaN(amount) || amount < 0) {
                     errors.push(`<b>${name || '익명'}</b>의 금액을 올바르게 입력해주세요.`);
                 }
                 
-                allPayerNames.add(name);
                 payments.push({
                     name: name,
                     amount: amount,
@@ -568,10 +851,9 @@
             }
 
             if (payments.length === 0) {
-                errors.push('최소 한 명의 지불자를 추가하고 금액을 입력해주세요.');
+                errors.push('최소 한 명의 지불자를 추가하고 정보를 입력해주세요.');
             }
             
-            // 오류가 하나라도 있으면 모든 오류 메시지를 표시하고 종료
             if (errors.length > 0) {
                 let errorHtml = '<p class="error-message"><b>계산 오류:</b></p><ul>';
                 errors.forEach(err => {
@@ -582,33 +864,20 @@
                 return;
             }
 
-            // 모든 참여자의 이름을 통합하여 배열 생성
-            let allParticipants = Array.from(allPayerNames);
-            payments.forEach(p => {
-                p.targetString.split(',').map(s => s.trim()).filter(s => s.length > 0).forEach(targetName => {
-                    const nameOnly = targetName.split(':')[0].trim();
-                    if (nameOnly) allParticipants.push(nameOnly);
-                });
-            });
-            allParticipants = [...new Set(allParticipants)]; // 중복 제거
-
-            // 총 인원수(N)와 참여자 수 비교하여 가상의 참여자 추가
-            while (allParticipants.length < totalPeople) {
-                allParticipants.push(`참석자 ${allParticipants.length + 1}`);
-            }
+            // 모든 참여자 목록을 기반으로 계산을 시작
+            const finalParticipants = allParticipants;
 
             // 각 지출에 대한 개인별 분담금액을 계산하는 1차 행렬 (Matrix 1)
             const matrix1 = {};
-            allParticipants.forEach(p1 => {
+            finalParticipants.forEach(p1 => {
                 matrix1[p1] = {};
-                allParticipants.forEach(p2 => {
+                finalParticipants.forEach(p2 => {
                     matrix1[p1][p2] = 0;
                 });
             });
 
             payments.forEach(p => {
                 if (p.targetString.includes(':')) {
-                    // 비율로 분담하는 경우: 'A:50, B, C'와 같은 입력
                     const targetParts = p.targetString.split(',').map(s => s.trim());
                     const parsedTargets = {};
                     let totalPercentage = 0;
@@ -618,88 +887,87 @@
                         const [targetName, ratio] = part.split(':').map(s => s.trim());
                         if (targetName) {
                             if(!isNaN(parseFloat(ratio))){
-                                // 명시된 비율이 있는 경우
                                 parsedTargets[targetName] = parseFloat(ratio);
                                 totalPercentage += parseFloat(ratio);
-                            }
-                            else{
-                                // 비율이 없는 경우 (남은 금액을 N빵으로 분배할 대상)
+                            } else {
                                 peopleForRemainingSplit.push(targetName);
                             }
                         }
                     }
 
-                    // 1. 명시된 비율로 금액 분배
                     for (const name in parsedTargets) {
                         const cost = p.amount * (parsedTargets[name] / 100);
-                        matrix1[p.name][name] += cost;
+                        if (finalParticipants.includes(name)) {
+                            matrix1[p.name][name] += cost;
+                        }
                     }
 
-                    // 2. 남은 금액을 비율이 없는 사람들에게 N빵으로 분배
                     const remainingAmount = p.amount * (1 - totalPercentage / 100);
                     
                     if (peopleForRemainingSplit.length > 0) {
-                        const costPerRemainingHead = remainingAmount / peopleForRemainingSplit.length;
-                        peopleForRemainingSplit.forEach(personName => {
-                            matrix1[p.name][personName] += costPerRemainingHead;
-                        });
+                        const validRemainingPeople = peopleForRemainingSplit.filter(person => finalParticipants.includes(person));
+                        if (validRemainingPeople.length > 0) {
+                            const costPerRemainingHead = remainingAmount / validRemainingPeople.length;
+                            validRemainingPeople.forEach(personName => {
+                                matrix1[p.name][personName] += costPerRemainingHead;
+                            });
+                        }
                     }
-
                 } else {
-                    // 비율이 없는 순수 N빵으로 분담하는 경우: 'A, B, C' 혹은 공백
                     const targetParts = p.targetString.split(',').map(s => s.trim());
                     const effectiveTargets = targetParts.filter(s => s.length > 0);
                     
                     let peopleToCharge;
                     if (effectiveTargets.length > 0) {
-                        peopleToCharge = effectiveTargets;
+                        peopleToCharge = effectiveTargets.filter(person => finalParticipants.includes(person));
                     } else {
-                        // 대상 인원 입력란이 비어있으면 총 인원수(N)로 N빵
-                        peopleToCharge = allParticipants;
+                        peopleToCharge = finalParticipants;
                     }
                     
-                    const costPerHead = p.amount / peopleToCharge.length;
-                    
-                    peopleToCharge.forEach(personName => {
-                        matrix1[p.name][personName] += costPerHead;
-                    });
+                    if (peopleToCharge.length > 0) {
+                        const costPerHead = p.amount / peopleToCharge.length;
+                        peopleToCharge.forEach(personName => {
+                            matrix1[p.name][personName] += costPerHead;
+                        });
+                    }
                 }
             });
 
             // 최종 정산 행렬 (Matrix 2)
             const matrix2 = {};
-            allParticipants.forEach(p1 => {
+            finalParticipants.forEach(p1 => {
                 matrix2[p1] = {};
-                allParticipants.forEach(p2 => {
-                    const value = matrix1[p2][p1] - matrix1[p1][p2];
+                finalParticipants.forEach(p2 => {
+                    const value = (matrix1[p2][p1] || 0) - (matrix1[p1][p2] || 0);
                     matrix2[p1][p2] = Math.max(0, value);
                 });
             });
 
             // 결과 HTML 생성
             let resultHTML = '<h3>각 지출에 대한 개인별 분담금액 (Matrix 1)</h3>';
+            resultHTML += '<p style="font-size: 0.8rem; color: #64748b; margin-bottom: 10px;">행(Beneficiary)이 열(Payer)에게 갚아야 할 금액</p>'
             resultHTML += '<table style="width:100%; border-collapse: collapse; text-align: center;" id="matrix1">';
-            resultHTML += '<thead><tr><th style="padding: 8px; border: 1px solid #ddd;"></th>' + allParticipants.map(p => `<th style="padding: 8px; border: 1px solid #ddd;">${p}</th>`).join('') + '</tr></thead>';
+            resultHTML += '<thead><tr><th style="padding: 8px; border: 1px solid #ddd;"></th>' + finalParticipants.map(p => `<th style="padding: 8px; border: 1px solid #ddd;">${p}</th>`).join('') + '</tr></thead>';
             resultHTML += '<tbody>';
-            allParticipants.forEach(rowP => {
+            finalParticipants.forEach(rowP => {
                 const sanitizedRowP = getSanitizedName(rowP);
                 resultHTML += `<tr><td style="padding: 8px; border: 1px solid #ddd;"><b>${rowP}</b></td>`;
-                allParticipants.forEach(colP => {
+                finalParticipants.forEach(colP => {
                     const sanitizedColP = getSanitizedName(colP);
-                    // 행/열 구성을 역전시켜 '열'이 '행'에게 지불한 금액을 보여줌
-                    resultHTML += `<td id="matrix1-cell-${sanitizedRowP}-${sanitizedColP}" style="padding: 8px; border: 1px solid #ddd;">${Math.round(matrix1[colP][rowP]).toLocaleString()}</td>`;
+                    resultHTML += `<td id="matrix1-cell-${sanitizedRowP}-${sanitizedColP}" style="padding: 8px; border: 1px solid #ddd;">${Math.round(matrix1[colP][rowP] || 0).toLocaleString()}</td>`;
                 });
                 resultHTML += '</tr>';
             });
             resultHTML += '</tbody></table>';
 
             resultHTML += '<h3 style="margin-top:20px;">최종 정산 행렬 (Matrix 2)</h3>';
+            resultHTML += '<p style="font-size: 0.8rem; color: #64748b; margin-bottom: 10px;">행(Payer)이 열(Receiver)에게 줘야 할 최종 금액</p>'
             resultHTML += '<table style="width:100%; border-collapse: collapse; text-align: center;" id="matrix2">';
-            resultHTML += '<thead><tr><th style="padding: 8px; border: 1px solid #ddd;"></th>' + allParticipants.map(p => `<th style="padding: 8px; border: 1px solid #ddd;">${p}</th>`).join('') + '</tr></thead>';
+            resultHTML += '<thead><tr><th style="padding: 8px; border: 1px solid #ddd;"></th>' + finalParticipants.map(p => `<th style="padding: 8px; border: 1px solid #ddd;">${p}</th>`).join('') + '</tr></thead>';
             resultHTML += '<tbody>';
-            allParticipants.forEach((rowP) => {
+            finalParticipants.forEach((rowP) => {
                 resultHTML += `<tr><td style="padding: 8px; border: 1px solid #ddd;"><b>${rowP}</b></td>`;
-                allParticipants.forEach((colP) => {
+                finalParticipants.forEach((colP) => {
                     const amount = Math.round(matrix2[rowP][colP]);
                     const cellAttributes = `data-row="${rowP}" data-col="${colP}"`;
                     const cellStyle = amount > 0 ? `cursor: pointer;` : '';
@@ -711,8 +979,8 @@
 
             resultHTML += '<h3 style="margin-top:20px;">최종 정산 결과</h3><ul>';
             let transactionsExist = false;
-            allParticipants.forEach(fromP => {
-                allParticipants.forEach(toP => {
+            finalParticipants.forEach(fromP => {
+                finalParticipants.forEach(toP => {
                     const amount = Math.round(matrix2[fromP][toP]);
                     if (amount > 0) {
                         resultHTML += `<li><b>${fromP}</b> &gt; <b>${toP}</b> ${amount.toLocaleString()}원</li>`;
@@ -728,7 +996,6 @@
 
             resultDiv.innerHTML = resultHTML;
 
-            // 계산 후 버튼들 동적 생성 및 추가
             const resultActionsDiv = document.createElement('div');
             resultActionsDiv.className = 'result-actions';
             
@@ -751,8 +1018,6 @@
             resultContainer.appendChild(resultActionsDiv);
             resultContainer.appendChild(statusMessage);
 
-
-            // 이벤트 위임을 사용하여 Matrix 2 테이블에만 리스너를 추가합니다.
             const matrix2Table = document.getElementById('matrix2');
             if (matrix2Table) {
                 matrix2Table.addEventListener('mouseover', handleMouseOver);
@@ -760,20 +1025,7 @@
             }
         }
 
-        /**
-         * Matrix 2 셀에 마우스 오버 시 호출되는 이벤트 핸들러
-         */
-        function handleMouseOver(event) {
-            const targetCell = event.target.closest('td');
-            if (targetCell && targetCell.dataset.row && targetCell.dataset.col) {
-                const from = targetCell.dataset.row;
-                const to = targetCell.dataset.col;
-                const amount = parseInt(targetCell.textContent.replace(/,/g, ''));
-                highlightSources(from, to);
-            }
-        }
-
-        // 함수가 정의된 후 호출되도록 위치를 변경합니다.
+        // 초기 지불자 입력란 추가
         addPayer();
     </script>
 </body>
