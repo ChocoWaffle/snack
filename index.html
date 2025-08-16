@@ -170,6 +170,16 @@
             padding: 0;
             margin: 0;
         }
+        
+        .result-box h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #1e293b;
+            font-weight: 600;
+            font-size: 1.1rem;
+            border-bottom: 1px dashed #cbd5e1;
+            padding-bottom: 8px;
+        }
 
         .result-box li {
             margin-bottom: 10px;
@@ -194,9 +204,45 @@
             margin-bottom: 15px;
             text-align: center;
         }
+        .final-balance {
+            font-weight: bold;
+        }
+        .final-balance.positive {
+            color: #10b981;
+        }
+        .final-balance.negative {
+            color: #ef4444;
+        }
+        .highlight {
+            background-color: #fff9c4; /* 연한 노란색 하이라이트 */
+            transition: background-color 0.3s ease;
+        }
+        .highlight-add {
+            background-color: #c8e6c9; /* 연한 녹색 하이라이트 */
+            transition: background-color 0.3s ease;
+        }
+        .highlight-sub {
+            background-color: #ffcdd2; /* 연한 빨간색 하이라이트 */
+            transition: background-color 0.3s ease;
+        }
+
+        .status-message {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+        
+        /* 추가된 스타일: 버튼들 사이의 간격 */
+        .result-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <div class="container">
         <h1>파워 N빵 계산기</h1>
         <p class="subtitle">그러게 한 사람이 몰빵해서 계산하자 했잖아</p>
@@ -209,8 +255,11 @@
         </div>
         <button class="button add-button" onclick="addPayer()">지불자 추가</button>
         <button class="button" onclick="calculate()">계산하기</button>
-        <div class="result-box" id="result">
-            <p>결과가 여기에 표시됩니다.</p>
+        <div id="result-container">
+            <div class="result-box" id="result">
+                <p>결과가 여기에 표시됩니다.</p>
+            </div>
+            <!-- 복사 버튼과 상태 메시지가 여기에 동적으로 추가됩니다 -->
         </div>
     </div>
 
@@ -232,7 +281,7 @@
                 <div class="row">
                     <div>
                         <label for="name-${payerCount}">이름</label>
-                        <input type="text" id="name-${payerCount}" class="payer-name" placeholder="지불자 ${payerCount}" value="지불자 ${payerCount}">
+                        <input type="text" id="name-${payerCount}" class="payer-name" placeholder="지불자 ${payerCount}" value="지불자 ${payerCount}" lang="ko" autofocus>
                     </div>
                     <div>
                         <label for="amount-${payerCount}">금액</label>
@@ -242,7 +291,7 @@
                 </div>
                 <div>
                     <label for="target-${payerCount}">대상 인원 (이름:비율, 이름:비율...)</label>
-                    <input type="text" id="target-${payerCount}" class="payer-target" placeholder="예: '길동:20, 민호:80' 혹은 '길동, 민호' (쉼표로 구분)">
+                    <input type="text" id="target-${payerCount}" class="payer-target" placeholder="예: '철수:20, 영희:80' 혹은 '철수, 영희' (쉼표로 구분)" lang="ko">
                 </div>
             `;
             
@@ -261,18 +310,162 @@
         }
 
         /**
+         * 이름을 CSS 선택자 친화적인 형식으로 변환합니다.
+         * 공백과 특수 문자를 하이픈으로 대체합니다.
+         * @param {string} name - 원본 이름
+         * @returns {string} 변환된 이름
+         */
+        function getSanitizedName(name) {
+            // 공백과 특수 문자를 하이픈으로 대체합니다.
+            return name.replace(/\s+/g, '-').replace(/[^\w\-가-힣ㄱ-ㅎㅏ-ㅣ]/g, '');
+        }
+
+        /**
+         * 마우스 오버 시 Matrix 1의 소스 셀을 하이라이트합니다.
+         * @param {string} from - 지불자 이름 (Matrix 2의 행)
+         * @param {string} to - 받을 사람 이름 (Matrix 2의 열)
+         */
+        function highlightSources(from, to) {
+            console.info(`from : ${from}', to : ${to}`)
+            // Matrix 2 셀의 계산 공식: matrix2[from][to] = matrix1[to][from] - matrix1[from][to]
+            // 따라서 하이라이트할 Matrix 1 셀은 matrix1[to][from]과 matrix1[from][to] 입니다.
+            const sanitizedFrom = getSanitizedName(from);
+            const sanitizedTo = getSanitizedName(to);
+            
+            const cell1 = document.querySelector(`#matrix1-cell-${sanitizedTo}-${sanitizedFrom}`);
+            const cell2 = document.querySelector(`#matrix1-cell-${sanitizedFrom}-${sanitizedTo}`);
+
+            if (cell1) {
+                cell1.classList.add('highlight-add');
+            }
+            if (cell2) {
+                cell2.classList.add('highlight-sub');
+            }
+        }
+
+        /**
+         * 마우스 아웃 시 Matrix 1의 하이라이트를 제거합니다.
+         * @param {string} from - 지불자 이름 (Matrix 2의 행)
+         * @param {string} to - 받을 사람 이름 (Matrix 2의 열)
+         */
+        function removeHighlight(from, to) {
+            const sanitizedFrom = getSanitizedName(from);
+            const sanitizedTo = getSanitizedName(to);
+            
+            const cell1 = document.querySelector(`#matrix1-cell-${sanitizedTo}-${sanitizedFrom}`);
+            const cell2 = document.querySelector(`#matrix1-cell-${sanitizedFrom}-${sanitizedTo}`);
+
+            if (cell1) {
+                cell1.classList.remove('highlight-add');
+            }
+            if (cell2) {
+                cell2.classList.remove('highlight-sub');
+            }
+        }
+        
+        /**
+         * Matrix 2 셀에서 마우스 아웃 시 호출되는 이벤트 핸들러
+         */
+        function handleMouseOut(event) {
+            const targetCell = event.target.closest('td');
+            if (targetCell && targetCell.dataset.row && targetCell.dataset.col) {
+                const from = targetCell.dataset.row;
+                const to = targetCell.dataset.col;
+                removeHighlight(from, to);
+            }
+        }
+
+        /**
+         * 계산이 완료된 결과 내용을 이미지로 다운로드합니다.
+         */
+        async function downloadResultAsImage() {
+            const resultBox = document.getElementById('result');
+            const statusMessage = document.getElementById('copy-status');
+            
+            if (!resultBox) {
+                return;
+            }
+
+            statusMessage.textContent = '이미지 생성 중...';
+
+            try {
+                // html2canvas를 사용하여 result-box를 캔버스에 렌더링
+                const canvas = await html2canvas(resultBox, {
+                    scale: 2, // 고해상도 이미지 생성을 위해 스케일 증가
+                    backgroundColor: '#f8fafc', // 배경색 지정
+                    useCORS: true // CORS 설정
+                });
+
+                // 캔버스 데이터를 다운로드 가능한 URL로 변환
+                const imageUrl = canvas.toDataURL('image/png');
+                
+                // 다운로드를 위한 임시 링크 생성
+                const link = document.createElement('a');
+                link.href = imageUrl;
+                link.download = 'n빵_정산_결과.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                statusMessage.textContent = '이미지 다운로드가 시작되었습니다!';
+                setTimeout(() => statusMessage.textContent = '', 3000);
+
+            } catch (err) {
+                console.error('Failed to download image: ', err);
+                statusMessage.textContent = '이미지 다운로드 실패.';
+            }
+        }
+
+        /**
+         * 최종 정산 결과 텍스트를 클립보드에 복사합니다.
+         */
+        function copyResultAsText() {
+            const resultList = document.querySelector('#result ul');
+            const statusMessage = document.getElementById('copy-status');
+            
+            if (!resultList) {
+                statusMessage.textContent = '복사할 텍스트가 없습니다.';
+                return;
+            }
+            
+            const textToCopy = resultList.innerText;
+            
+            // 텍스트를 임시 요소에 넣고 복사
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = textToCopy;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            
+            try {
+                document.execCommand('copy');
+                statusMessage.textContent = '텍스트가 클립보드에 복사되었습니다!';
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+                statusMessage.textContent = '텍스트 복사 실패.';
+            }
+            
+            document.body.removeChild(tempTextArea);
+            setTimeout(() => statusMessage.textContent = '', 3000);
+        }
+
+        /**
          * 정산을 계산하는 메인 함수.
          * 모든 동적 입력값을 읽어 잔액을 계산하고 정산 내역을 표시합니다.
          */
         function calculate() {
             const totalPeople = parseInt(document.getElementById('totalPeople').value);
+            const resultContainer = document.getElementById('result-container');
+            resultContainer.innerHTML = `
+                <div class="result-box" id="result">
+                    <p>결과가 여기에 표시됩니다.</p>
+                </div>
+            `;
             const resultDiv = document.getElementById('result');
-
-            resultDiv.innerHTML = '';
+            
+            const errors = []; // 오류를 담을 배열
 
             if (isNaN(totalPeople) || totalPeople <= 0) {
-                resultDiv.innerHTML = '<p class="error-message">총 인원수를 올바르게 입력해주세요.</p>';
-                return;
+                errors.push('총 인원수를 올바르게 입력해주세요.');
             }
 
             const payerInputs = document.querySelectorAll('.payer-input-group');
@@ -280,16 +473,16 @@
             const payments = [];
             const allPayerNames = new Set();
             
+            // 입력값 유효성 검사 및 데이터 수집
             for (const inputDiv of payerInputs) {
                 const name = inputDiv.querySelector('.payer-name').value.trim();
                 const amount = parseInt(inputDiv.querySelector('.payer-amount').value);
                 const targetString = inputDiv.querySelector('.payer-target').value.trim();
 
                 if (isNaN(amount) || amount < 0) {
-                    resultDiv.innerHTML = `<p class="error-message"><b>${name || '익명'}</b>의 금액을 올바르게 입력해주세요.</p>`;
-                    return;
+                    errors.push(`<b>${name || '익명'}</b>의 금액을 올바르게 입력해주세요.`);
                 }
-
+                
                 allPayerNames.add(name);
                 payments.push({
                     name: name,
@@ -299,7 +492,17 @@
             }
 
             if (payments.length === 0) {
-                resultDiv.innerHTML = '<p class="error-message">최소 한 명의 지불자를 추가하고 금액을 입력해주세요.</p>';
+                errors.push('최소 한 명의 지불자를 추가하고 금액을 입력해주세요.');
+            }
+            
+            // 오류가 하나라도 있으면 모든 오류 메시지를 표시하고 종료
+            if (errors.length > 0) {
+                let errorHtml = '<p class="error-message"><b>계산 오류:</b></p><ul>';
+                errors.forEach(err => {
+                    errorHtml += `<li>${err}</li>`;
+                });
+                errorHtml += '</ul>';
+                resultDiv.innerHTML = errorHtml;
                 return;
             }
 
@@ -318,51 +521,56 @@
                 allParticipants.push(`참석자 ${allParticipants.length + 1}`);
             }
 
-            const balances = {};
-            allParticipants.forEach(p => { balances[p] = 0; });
-            
-            payments.forEach(p => {
-                balances[p.name] = (balances[p.name] || 0) + p.amount;
+            // 각 지출에 대한 개인별 분담금액을 계산하는 1차 행렬 (Matrix 1)
+            const matrix1 = {};
+            allParticipants.forEach(p1 => {
+                matrix1[p1] = {};
+                allParticipants.forEach(p2 => {
+                    matrix1[p1][p2] = 0;
+                });
             });
-            
-            let totalActualPaid = 0;
-            for (const p of payments) {
+
+            payments.forEach(p => {
                 if (p.targetString.includes(':')) {
+                    // 비율로 분담하는 경우: 'A:50, B, C'와 같은 입력
                     const targetParts = p.targetString.split(',').map(s => s.trim());
                     const parsedTargets = {};
                     let totalPercentage = 0;
-                    const explicitlyTargetedNames = new Set();
-
+                    const peopleForRemainingSplit = [];
+                    
                     for (const part of targetParts) {
                         const [targetName, ratio] = part.split(':').map(s => s.trim());
-                        if (targetName && !isNaN(parseFloat(ratio))) {
-                            parsedTargets[targetName] = parseFloat(ratio);
-                            totalPercentage += parseFloat(ratio);
-                            explicitlyTargetedNames.add(targetName);
+                        if (targetName) {
+                            if(!isNaN(parseFloat(ratio))){
+                                // 명시된 비율이 있는 경우
+                                parsedTargets[targetName] = parseFloat(ratio);
+                                totalPercentage += parseFloat(ratio);
+                            }
+                            else{
+                                // 비율이 없는 경우 (남은 금액을 N빵으로 분배할 대상)
+                                peopleForRemainingSplit.push(targetName);
+                            }
                         }
                     }
 
-                    if (totalPercentage > 100.01) {
-                        resultDiv.innerHTML = `<p class="error-message">지정된 비율의 합계가 100%를 초과할 수 없습니다. 다시 확인해주세요.</p>`;
-                        return;
-                    }
-
+                    // 1. 명시된 비율로 금액 분배
                     for (const name in parsedTargets) {
                         const cost = p.amount * (parsedTargets[name] / 100);
-                        balances[name] -= cost;
+                        matrix1[p.name][name] += cost;
                     }
 
+                    // 2. 남은 금액을 비율이 없는 사람들에게 N빵으로 분배
                     const remainingAmount = p.amount * (1 - totalPercentage / 100);
-                    const unspecifiedTargets = allParticipants.filter(name => !explicitlyTargetedNames.has(name));
                     
-                    if (unspecifiedTargets.length > 0) {
-                        const costPerRemainingHead = remainingAmount / unspecifiedTargets.length;
-                        unspecifiedTargets.forEach(personName => {
-                            balances[personName] -= costPerRemainingHead;
+                    if (peopleForRemainingSplit.length > 0) {
+                        const costPerRemainingHead = remainingAmount / peopleForRemainingSplit.length;
+                        peopleForRemainingSplit.forEach(personName => {
+                            matrix1[p.name][personName] += costPerRemainingHead;
                         });
                     }
 
                 } else {
+                    // 비율이 없는 순수 N빵으로 분담하는 경우: 'A, B, C' 혹은 공백
                     const targetParts = p.targetString.split(',').map(s => s.trim());
                     const effectiveTargets = targetParts.filter(s => s.length > 0);
                     
@@ -370,76 +578,126 @@
                     if (effectiveTargets.length > 0) {
                         peopleToCharge = effectiveTargets;
                     } else {
-                        // 대상 인원 칸이 비어있을 경우 총 인원수(N)로 계산
+                        // 대상 인원 입력란이 비어있으면 총 인원수(N)로 N빵
                         peopleToCharge = allParticipants;
                     }
                     
                     const costPerHead = p.amount / peopleToCharge.length;
+                    
                     peopleToCharge.forEach(personName => {
-                        if (!balances[personName]) {
-                            balances[personName] = 0;
-                        }
-                        balances[personName] -= costPerHead;
+                        matrix1[p.name][personName] += costPerHead;
                     });
                 }
-                
-                totalActualPaid += p.amount;
-            }
+            });
 
-            const perPersonCost = totalActualPaid / totalPeople;
-
-            const creditors = Object.keys(balances)
-                                .filter(person => balances[person] > 0.01)
-                                .map(person => ({ name: person, amount: balances[person] }));
-            const debtors = Object.keys(balances)
-                                .filter(person => balances[person] < -0.01)
-                                .map(person => ({ name: person, amount: Math.abs(balances[person]) }));
-
-            creditors.sort((a, b) => b.amount - a.amount);
-            debtors.sort((a, b) => b.amount - a.amount);
-
-            const transactions = [];
-            let creditorIndex = 0;
-            let debtorIndex = 0;
-
-            while (creditorIndex < creditors.length && debtorIndex < debtors.length) {
-                const creditor = creditors[creditorIndex];
-                const debtor = debtors[debtorIndex];
-
-                const settledAmount = Math.min(creditor.amount, debtor.amount);
-                
-                transactions.push({
-                    from: debtor.name,
-                    to: creditor.name,
-                    amount: Math.round(settledAmount)
+            // 최종 정산 행렬 (Matrix 2)
+            const matrix2 = {};
+            allParticipants.forEach(p1 => {
+                matrix2[p1] = {};
+                allParticipants.forEach(p2 => {
+                    const value = matrix1[p2][p1] - matrix1[p1][p2];
+                    matrix2[p1][p2] = Math.max(0, value);
                 });
+            });
 
-                creditor.amount -= settledAmount;
-                debtor.amount -= settledAmount;
+            // 결과 HTML 생성
+            let resultHTML = '<h3>각 지출에 대한 개인별 분담금액 (Matrix 1)</h3>';
+            resultHTML += '<table style="width:100%; border-collapse: collapse; text-align: center;" id="matrix1">';
+            resultHTML += '<thead><tr><th style="padding: 8px; border: 1px solid #ddd;"></th>' + allParticipants.map(p => `<th style="padding: 8px; border: 1px solid #ddd;">${p}</th>`).join('') + '</tr></thead>';
+            resultHTML += '<tbody>';
+            allParticipants.forEach(rowP => {
+                const sanitizedRowP = getSanitizedName(rowP);
+                resultHTML += `<tr><td style="padding: 8px; border: 1px solid #ddd;"><b>${rowP}</b></td>`;
+                allParticipants.forEach(colP => {
+                    const sanitizedColP = getSanitizedName(colP);
+                    // 행/열 구성을 역전시켜 '열'이 '행'에게 지불한 금액을 보여줌
+                    resultHTML += `<td id="matrix1-cell-${sanitizedRowP}-${sanitizedColP}" style="padding: 8px; border: 1px solid #ddd;">${Math.round(matrix1[colP][rowP]).toLocaleString()}</td>`;
+                });
+                resultHTML += '</tr>';
+            });
+            resultHTML += '</tbody></table>';
 
-                if (creditor.amount <= 0.01) {
-                    creditorIndex++;
-                }
-                if (debtor.amount <= 0.01) {
-                    debtorIndex++;
-                }
-            }
+            resultHTML += '<h3 style="margin-top:20px;">최종 정산 행렬 (Matrix 2)</h3>';
+            resultHTML += '<table style="width:100%; border-collapse: collapse; text-align: center;" id="matrix2">';
+            resultHTML += '<thead><tr><th style="padding: 8px; border: 1px solid #ddd;"></th>' + allParticipants.map(p => `<th style="padding: 8px; border: 1px solid #ddd;">${p}</th>`).join('') + '</tr></thead>';
+            resultHTML += '<tbody>';
+            allParticipants.forEach((rowP) => {
+                resultHTML += `<tr><td style="padding: 8px; border: 1px solid #ddd;"><b>${rowP}</b></td>`;
+                allParticipants.forEach((colP) => {
+                    const amount = Math.round(matrix2[rowP][colP]);
+                    const cellAttributes = `data-row="${rowP}" data-col="${colP}"`;
+                    const cellStyle = amount > 0 ? `cursor: pointer;` : '';
+                    resultHTML += `<td ${cellAttributes} style="padding: 8px; border: 1px solid #ddd;${cellStyle}">${amount.toLocaleString()}</td>`;
+                });
+                resultHTML += '</tr>';
+            });
+            resultHTML += '</tbody></table>';
 
-            let resultHTML = '<p class="balance-info"><b>1인당 평균 부담 금액:</b> ' + Math.round(perPersonCost).toLocaleString() + '원</p>';
-            resultHTML += '<ul>';
+            resultHTML += '<h3 style="margin-top:20px;">최종 정산 결과</h3><ul>';
+            let transactionsExist = false;
+            allParticipants.forEach(fromP => {
+                allParticipants.forEach(toP => {
+                    const amount = Math.round(matrix2[fromP][toP]);
+                    if (amount > 0) {
+                        resultHTML += `<li><b>${fromP}</b> &gt; <b>${toP}</b> ${amount.toLocaleString()}원</li>`;
+                        transactionsExist = true;
+                    }
+                });
+            });
 
-            if (transactions.length === 0) {
+            if (!transactionsExist) {
                 resultHTML += '<li>정산할 금액이 없습니다.</li>';
-            } else {
-                transactions.forEach(t => {
-                    resultHTML += `<li><b>${t.from}</b>이 <b>${t.to}</b>에게 <b>${t.amount.toLocaleString()}원</b> 지불해야 함.</li>`;
-                });
             }
-            
             resultHTML += '</ul>';
+
             resultDiv.innerHTML = resultHTML;
+
+            // 계산 후 버튼들 동적 생성 및 추가
+            const resultActionsDiv = document.createElement('div');
+            resultActionsDiv.className = 'result-actions';
+            
+            const downloadButton = document.createElement('button');
+            downloadButton.className = 'button secondary-button';
+            downloadButton.textContent = '이미지로 저장';
+            downloadButton.onclick = downloadResultAsImage;
+            
+            const copyTextButton = document.createElement('button');
+            copyTextButton.className = 'button secondary-button';
+            copyTextButton.textContent = '정산 결과 텍스트 복사';
+            copyTextButton.onclick = copyResultAsText;
+
+            const statusMessage = document.createElement('p');
+            statusMessage.id = 'copy-status';
+            statusMessage.className = 'status-message';
+            
+            resultActionsDiv.appendChild(downloadButton);
+            resultActionsDiv.appendChild(copyTextButton);
+            resultContainer.appendChild(resultActionsDiv);
+            resultContainer.appendChild(statusMessage);
+
+
+            // 이벤트 위임을 사용하여 Matrix 2 테이블에만 리스너를 추가합니다.
+            const matrix2Table = document.getElementById('matrix2');
+            if (matrix2Table) {
+                matrix2Table.addEventListener('mouseover', handleMouseOver);
+                matrix2Table.addEventListener('mouseout', handleMouseOut);
+            }
         }
-        
+
+        /**
+         * Matrix 2 셀에 마우스 오버 시 호출되는 이벤트 핸들러
+         */
+        function handleMouseOver(event) {
+            const targetCell = event.target.closest('td');
+            if (targetCell && targetCell.dataset.row && targetCell.dataset.col) {
+                const from = targetCell.dataset.row;
+                const to = targetCell.dataset.col;
+                const amount = parseInt(targetCell.textContent.replace(/,/g, ''));
+                highlightSources(from, to);
+            }
+        }
+
+        // 함수가 정의된 후 호출되도록 위치를 변경합니다.
         addPayer();
     </script>
 </body>
