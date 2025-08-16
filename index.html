@@ -520,7 +520,7 @@
             newPayerDiv.querySelector('.payer-name').addEventListener('click', (e) => showPopup('payerName', e.target));
             newPayerDiv.querySelector('.payer-target').addEventListener('click', (e) => showPopup('target', e.target));
         }
-
+        
         /**
          * 동적 입력 그룹을 제거합니다.
          * @param {HTMLElement} button - 클릭된 제거 버튼 요소
@@ -791,7 +791,100 @@
             activeInput.value = selectedTargets.join(', ');
             hidePopup('target');
         }
+
+        /**
+         * 정산 상태를 URL에 인코딩하고 링크를 클립보드에 복사합니다.
+         */
+        function generateLink() {
+            const statusMessage = document.getElementById('copy-status');
+            statusMessage.textContent = '링크 생성 중...';
+
+            try {
+                const allParticipants = document.getElementById('allParticipants').value.trim();
+                const payerInputs = document.querySelectorAll('.payer-input-group');
+                const payments = [];
+
+                payerInputs.forEach(inputDiv => {
+                    const name = inputDiv.querySelector('.payer-name').value.trim();
+                    const amount = inputDiv.querySelector('.payer-amount').value;
+                    const targetString = inputDiv.querySelector('.payer-target').value.trim();
+
+                    if (name && amount) { // 유효한 입력만 저장
+                        payments.push({ name, amount, targetString });
+                    }
+                });
+
+                const appState = {
+                    participants: allParticipants,
+                    payments: payments
+                };
+
+                const jsonState = JSON.stringify(appState);
+                const encodedState = btoa(unescape(encodeURIComponent(jsonState)));
+                
+                const fullUrl = window.location.origin + window.location.pathname + '#' + encodedState;
+
+                // 텍스트를 임시 textarea에 넣고 복사
+                const tempTextArea = document.createElement('textarea');
+                tempTextArea.value = fullUrl;
+                document.body.appendChild(tempTextArea);
+                tempTextArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempTextArea);
+
+                statusMessage.textContent = '정산 링크가 클립보드에 복사되었습니다!';
+                setTimeout(() => statusMessage.textContent = '', 3000);
+            } catch (error) {
+                console.error('Failed to generate link:', error);
+                statusMessage.textContent = '링크 생성 실패.';
+            }
+        }
         
+        /**
+         * URL 해시를 기반으로 정산 상태를 복원하고 계산을 실행합니다.
+         */
+        function restoreFromLink() {
+            const hash = window.location.hash.slice(1);
+            if (!hash) {
+                // 해시가 없으면 복원할 데이터가 없으므로 종료
+                return;
+            }
+
+            try {
+                const decodedState = decodeURIComponent(escape(atob(hash)));
+                const appState = JSON.parse(decodedState);
+
+                // UI를 복원하기 전에 기존 입력란 모두 제거
+                const dynamicInputs = document.getElementById('dynamicInputs');
+                dynamicInputs.innerHTML = '';
+                
+                // 전체 참여자 이름 복원
+                document.getElementById('allParticipants').value = appState.participants || '';
+
+                // 지불자 입력란 복원
+                if (appState.payments && Array.isArray(appState.payments)) {
+                    appState.payments.forEach(payment => {
+                        addPayer();
+                        const newPayerDiv = dynamicInputs.lastElementChild;
+                        if (newPayerDiv) {
+                            newPayerDiv.querySelector('.payer-name').value = payment.name;
+                            newPayerDiv.querySelector('.payer-amount').value = payment.amount;
+                            newPayerDiv.querySelector('.payer-target').value = payment.targetString;
+                        }
+                    });
+                }
+                
+                // 데이터가 복원되면 자동으로 계산 실행
+                calculate();
+                
+            } catch (error) {
+                console.error('Failed to restore from link:', error);
+                // 유효하지 않은 링크일 경우 사용자에게 알림
+                const resultDiv = document.getElementById('result');
+                resultDiv.innerHTML = `<p class="error-message"><b>오류:</b> 유효하지 않은 정산 링크입니다.</p>`;
+            }
+        }
+
         /**
          * 정산을 계산하는 메인 함수.
          * 모든 동적 입력값을 읽어 잔액을 계산하고 정산 내역을 표시합니다.
@@ -1009,12 +1102,18 @@
             copyTextButton.textContent = '정산 결과 텍스트 복사';
             copyTextButton.onclick = copyResultAsText;
 
+            const generateLinkButton = document.createElement('button');
+            generateLinkButton.className = 'button secondary-button';
+            generateLinkButton.textContent = '정산 링크 생성';
+            generateLinkButton.onclick = generateLink;
+
             const statusMessage = document.createElement('p');
             statusMessage.id = 'copy-status';
             statusMessage.className = 'status-message';
             
             resultActionsDiv.appendChild(downloadButton);
             resultActionsDiv.appendChild(copyTextButton);
+            resultActionsDiv.appendChild(generateLinkButton);
             resultContainer.appendChild(resultActionsDiv);
             resultContainer.appendChild(statusMessage);
 
@@ -1027,6 +1126,8 @@
 
         // 초기 지불자 입력란 추가
         addPayer();
+        // 페이지 로드 시 URL 해시에서 데이터 복원 시도
+        restoreFromLink();
     </script>
 </body>
 </html>
