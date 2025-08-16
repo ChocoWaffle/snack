@@ -303,7 +303,24 @@
                 return;
             }
 
+            // 모든 참여자의 이름을 통합하여 배열 생성
+            let allParticipants = Array.from(allPayerNames);
+            payments.forEach(p => {
+                p.targetString.split(',').map(s => s.trim()).filter(s => s.length > 0).forEach(targetName => {
+                    const nameOnly = targetName.split(':')[0].trim();
+                    if (nameOnly) allParticipants.push(nameOnly);
+                });
+            });
+            allParticipants = [...new Set(allParticipants)]; // 중복 제거
+
+            // 총 인원수(N)와 참여자 수 비교하여 가상의 참여자 추가
+            while (allParticipants.length < totalPeople) {
+                allParticipants.push(`참석자 ${allParticipants.length + 1}`);
+            }
+
             const balances = {};
+            allParticipants.forEach(p => { balances[p] = 0; });
+            
             payments.forEach(p => {
                 balances[p.name] = (balances[p.name] || 0) + p.amount;
             });
@@ -322,65 +339,46 @@
                             parsedTargets[targetName] = parseFloat(ratio);
                             totalPercentage += parseFloat(ratio);
                             explicitlyTargetedNames.add(targetName);
-                            if (!balances[targetName]) {
-                                balances[targetName] = 0;
-                            }
                         }
                     }
 
-                    // 비율 합이 100%를 초과하는 경우 오류 메시지 표시
-                    if (totalPercentage > 100.01) { // 100.01은 부동소수점 오차를 고려한 값
+                    if (totalPercentage > 100.01) {
                         resultDiv.innerHTML = `<p class="error-message">지정된 비율의 합계가 100%를 초과할 수 없습니다. 다시 확인해주세요.</p>`;
                         return;
                     }
 
-                    // 지정된 비율로 금액 분할
                     for (const name in parsedTargets) {
                         const cost = p.amount * (parsedTargets[name] / 100);
                         balances[name] -= cost;
                     }
 
-                    // 남은 금액 계산
                     const remainingAmount = p.amount * (1 - totalPercentage / 100);
-
-                    // 나머지 인원 찾기
-                    let allParticipants = new Set(Array.from(allPayerNames));
-                    payments.forEach(pay => allParticipants.add(pay.name));
-                    Array.from(explicitlyTargetedNames).forEach(name => allParticipants.add(name));
-
-                    const unspecifiedTargets = Array.from(allParticipants).filter(name => !explicitlyTargetedNames.has(name));
+                    const unspecifiedTargets = allParticipants.filter(name => !explicitlyTargetedNames.has(name));
                     
-                    if (allParticipants.size < totalPeople) {
-                        let nonPayerCount = totalPeople - allParticipants.size;
-                        for(let i=0; i<nonPayerCount; i++) {
-                            unspecifiedTargets.push('나머지 인원' + (i > 0 ? i : ''));
-                        }
-                    }
-
-                    // 남은 금액을 나머지 인원에게 균등 분할
-                    const remainingTargetsCount = unspecifiedTargets.length;
-                    if (remainingTargetsCount > 0) {
-                        const costPerRemainingHead = remainingAmount / remainingTargetsCount;
+                    if (unspecifiedTargets.length > 0) {
+                        const costPerRemainingHead = remainingAmount / unspecifiedTargets.length;
                         unspecifiedTargets.forEach(personName => {
-                             if (!balances[personName]) {
-                                balances[personName] = 0;
-                            }
                             balances[personName] -= costPerRemainingHead;
                         });
                     }
 
-                } else { // 비율이 지정되지 않은 경우 (기존 로직 유지)
+                } else {
                     const targetParts = p.targetString.split(',').map(s => s.trim());
                     const effectiveTargets = targetParts.filter(s => s.length > 0);
                     
-                    effectiveTargets.forEach(targetName => {
-                        if (!balances[targetName]) {
-                            balances[targetName] = 0;
-                        }
-                    });
+                    let peopleToCharge;
+                    if (effectiveTargets.length > 0) {
+                        peopleToCharge = effectiveTargets;
+                    } else {
+                        // 대상 인원 칸이 비어있을 경우 총 인원수(N)로 계산
+                        peopleToCharge = allParticipants;
+                    }
                     
-                    const costPerHead = p.amount / effectiveTargets.length;
-                    effectiveTargets.forEach(personName => {
+                    const costPerHead = p.amount / peopleToCharge.length;
+                    peopleToCharge.forEach(personName => {
+                        if (!balances[personName]) {
+                            balances[personName] = 0;
+                        }
                         balances[personName] -= costPerHead;
                     });
                 }
