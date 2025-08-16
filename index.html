@@ -1,2 +1,448 @@
-<h1>Our Website</h1>
-<p style="color: blue;">반갑습니다!</p>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>N빵 계산기</title>
+    <style>
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f4f8;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+
+        h1 {
+            color: #1e293b;
+            font-size: 1.75rem;
+            margin-bottom: 5px; /* 서브 제목과의 간격 조절 */
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: #64748b;
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .payer-input-container {
+            width: 100%;
+        }
+
+        .payer-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #fafbfd;
+            border-radius: 8px;
+            border: 1px solid #eef2f6;
+        }
+        
+        .payer-input-group .row {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .payer-input-group .row > div {
+            flex: 1;
+            text-align: left;
+        }
+        
+        .payer-input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #475569;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .payer-input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #475569;
+            font-weight: 500;
+        }
+
+        .input-group input:focus, .payer-input-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .button {
+            width: 100%;
+            padding: 14px;
+            background-color: #2563eb;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            margin-bottom: 10px;
+        }
+        
+        .button.secondary-button {
+            background-color: #475569;
+        }
+        
+        .button.secondary-button:hover {
+            background-color: #334155;
+        }
+
+        .button:hover {
+            background-color: #1d4ed8;
+            transform: translateY(-2px);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+        
+        .add-button {
+            background-color: #10b981;
+        }
+
+        .add-button:hover {
+            background-color: #059669;
+        }
+
+        .remove-button {
+            padding: 10px 12px;
+            background-color: #ef4444;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .remove-button:hover {
+            background-color: #dc2626;
+        }
+        
+        .result-box {
+            margin-top: 25px;
+            padding: 20px;
+            background-color: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            text-align: left;
+            word-break: break-all;
+        }
+        
+        .result-box ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .result-box li {
+            margin-bottom: 10px;
+            color: #334155;
+            line-height: 1.5;
+            font-weight: 500;
+        }
+
+        .result-box li:last-child {
+            margin-bottom: 0;
+        }
+
+        .error-message {
+            color: #ef4444;
+            text-align: center;
+            margin-top: 15px;
+            font-weight: 500;
+        }
+        .balance-info {
+            font-weight: bold;
+            color: #1a73e8;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>파워 N빵 계산기</h1>
+        <p class="subtitle">그러게 한 사람이 몰빵해서 계산하자 했잖아</p>
+        <div class="input-group">
+            <label for="totalPeople">총 인원수 (N)</label>
+            <input type="number" id="totalPeople" placeholder="전체 인원" min="1" required>
+        </div>
+        <div class="payer-input-container" id="dynamicInputs">
+            <!-- 지불자 입력란이 여기에 동적으로 추가됩니다 -->
+        </div>
+        <button class="button add-button" onclick="addPayer()">지불자 추가</button>
+        <button class="button" onclick="calculate()">계산하기</button>
+        <div class="result-box" id="result">
+            <p>결과가 여기에 표시됩니다.</p>
+        </div>
+    </div>
+
+    <script>
+        // 고유한 지불자 ID를 위한 카운터
+        let payerCount = 0;
+
+        /**
+         * 새로운 지불자 이름, 금액, 대상 인원 입력란을 동적으로 추가합니다.
+         */
+        function addPayer() {
+            payerCount++;
+            const dynamicInputs = document.getElementById('dynamicInputs');
+            const newPayerDiv = document.createElement('div');
+            newPayerDiv.className = 'payer-input-group';
+            newPayerDiv.dataset.id = payerCount;
+            
+            newPayerDiv.innerHTML = `
+                <div class="row">
+                    <div>
+                        <label for="name-${payerCount}">이름</label>
+                        <input type="text" id="name-${payerCount}" class="payer-name" placeholder="지불자 ${payerCount}" value="지불자 ${payerCount}">
+                    </div>
+                    <div>
+                        <label for="amount-${payerCount}">금액</label>
+                        <input type="number" id="amount-${payerCount}" class="payer-amount" placeholder="금액" min="0" required>
+                    </div>
+                    <button class="remove-button" onclick="removePayer(this)">제거</button>
+                </div>
+                <div>
+                    <label for="target-${payerCount}">대상 인원 (이름:비율, 이름:비율...)</label>
+                    <input type="text" id="target-${payerCount}" class="payer-target" placeholder="예: 'A:20, B:80' 혹은 'A, B' (쉼표로 구분)">
+                </div>
+            `;
+            
+            dynamicInputs.appendChild(newPayerDiv);
+        }
+
+        /**
+         * 동적 입력 그룹을 제거합니다.
+         * @param {HTMLElement} button - 클릭된 제거 버튼 요소
+         */
+        function removePayer(button) {
+            const payerInputGroup = button.closest('.payer-input-group');
+            if (payerInputGroup) {
+                payerInputGroup.remove();
+            }
+        }
+
+        /**
+         * 정산을 계산하는 메인 함수.
+         * 모든 동적 입력값을 읽어 잔액을 계산하고 정산 내역을 표시합니다.
+         */
+        function calculate() {
+            const totalPeople = parseInt(document.getElementById('totalPeople').value);
+            const resultDiv = document.getElementById('result');
+
+            resultDiv.innerHTML = '';
+
+            if (isNaN(totalPeople) || totalPeople <= 0) {
+                resultDiv.innerHTML = '<p class="error-message">총 인원수를 올바르게 입력해주세요.</p>';
+                return;
+            }
+
+            const payerInputs = document.querySelectorAll('.payer-input-group');
+            
+            const payments = [];
+            const allPayerNames = new Set();
+            
+            for (const inputDiv of payerInputs) {
+                const name = inputDiv.querySelector('.payer-name').value.trim();
+                const amount = parseInt(inputDiv.querySelector('.payer-amount').value);
+                const targetString = inputDiv.querySelector('.payer-target').value.trim();
+
+                if (isNaN(amount) || amount < 0) {
+                    resultDiv.innerHTML = `<p class="error-message"><b>${name || '익명'}</b>의 금액을 올바르게 입력해주세요.</p>`;
+                    return;
+                }
+
+                allPayerNames.add(name);
+                payments.push({
+                    name: name,
+                    amount: amount,
+                    targetString: targetString
+                });
+            }
+
+            if (payments.length === 0) {
+                resultDiv.innerHTML = '<p class="error-message">최소 한 명의 지불자를 추가하고 금액을 입력해주세요.</p>';
+                return;
+            }
+
+            const balances = {};
+            payments.forEach(p => {
+                balances[p.name] = (balances[p.name] || 0) + p.amount;
+            });
+            
+            let totalActualPaid = 0;
+            for (const p of payments) {
+                if (p.targetString.includes(':')) {
+                    const targetParts = p.targetString.split(',').map(s => s.trim());
+                    const parsedTargets = {};
+                    let totalPercentage = 0;
+                    const explicitlyTargetedNames = new Set();
+
+                    for (const part of targetParts) {
+                        const [targetName, ratio] = part.split(':').map(s => s.trim());
+                        if (targetName && !isNaN(parseFloat(ratio))) {
+                            parsedTargets[targetName] = parseFloat(ratio);
+                            totalPercentage += parseFloat(ratio);
+                            explicitlyTargetedNames.add(targetName);
+                            if (!balances[targetName]) {
+                                balances[targetName] = 0;
+                            }
+                        }
+                    }
+
+                    // 비율 합이 100%를 초과하는 경우 오류 메시지 표시
+                    if (totalPercentage > 100.01) { // 100.01은 부동소수점 오차를 고려한 값
+                        resultDiv.innerHTML = `<p class="error-message">지정된 비율의 합계가 100%를 초과할 수 없습니다. 다시 확인해주세요.</p>`;
+                        return;
+                    }
+
+                    // 지정된 비율로 금액 분할
+                    for (const name in parsedTargets) {
+                        const cost = p.amount * (parsedTargets[name] / 100);
+                        balances[name] -= cost;
+                    }
+
+                    // 남은 금액 계산
+                    const remainingAmount = p.amount * (1 - totalPercentage / 100);
+
+                    // 나머지 인원 찾기
+                    let allParticipants = new Set(Array.from(allPayerNames));
+                    payments.forEach(pay => allParticipants.add(pay.name));
+                    Array.from(explicitlyTargetedNames).forEach(name => allParticipants.add(name));
+
+                    const unspecifiedTargets = Array.from(allParticipants).filter(name => !explicitlyTargetedNames.has(name));
+                    
+                    if (allParticipants.size < totalPeople) {
+                        let nonPayerCount = totalPeople - allParticipants.size;
+                        for(let i=0; i<nonPayerCount; i++) {
+                            unspecifiedTargets.push('나머지 인원' + (i > 0 ? i : ''));
+                        }
+                    }
+
+                    // 남은 금액을 나머지 인원에게 균등 분할
+                    const remainingTargetsCount = unspecifiedTargets.length;
+                    if (remainingTargetsCount > 0) {
+                        const costPerRemainingHead = remainingAmount / remainingTargetsCount;
+                        unspecifiedTargets.forEach(personName => {
+                             if (!balances[personName]) {
+                                balances[personName] = 0;
+                            }
+                            balances[personName] -= costPerRemainingHead;
+                        });
+                    }
+
+                } else { // 비율이 지정되지 않은 경우 (기존 로직 유지)
+                    const targetParts = p.targetString.split(',').map(s => s.trim());
+                    const effectiveTargets = targetParts.filter(s => s.length > 0);
+                    
+                    effectiveTargets.forEach(targetName => {
+                        if (!balances[targetName]) {
+                            balances[targetName] = 0;
+                        }
+                    });
+                    
+                    const costPerHead = p.amount / effectiveTargets.length;
+                    effectiveTargets.forEach(personName => {
+                        balances[personName] -= costPerHead;
+                    });
+                }
+                
+                totalActualPaid += p.amount;
+            }
+
+            const perPersonCost = totalActualPaid / totalPeople;
+
+            const creditors = Object.keys(balances)
+                                .filter(person => balances[person] > 0.01)
+                                .map(person => ({ name: person, amount: balances[person] }));
+            const debtors = Object.keys(balances)
+                                .filter(person => balances[person] < -0.01)
+                                .map(person => ({ name: person, amount: Math.abs(balances[person]) }));
+
+            creditors.sort((a, b) => b.amount - a.amount);
+            debtors.sort((a, b) => b.amount - a.amount);
+
+            const transactions = [];
+            let creditorIndex = 0;
+            let debtorIndex = 0;
+
+            while (creditorIndex < creditors.length && debtorIndex < debtors.length) {
+                const creditor = creditors[creditorIndex];
+                const debtor = debtors[debtorIndex];
+
+                const settledAmount = Math.min(creditor.amount, debtor.amount);
+                
+                transactions.push({
+                    from: debtor.name,
+                    to: creditor.name,
+                    amount: Math.round(settledAmount)
+                });
+
+                creditor.amount -= settledAmount;
+                debtor.amount -= settledAmount;
+
+                if (creditor.amount <= 0.01) {
+                    creditorIndex++;
+                }
+                if (debtor.amount <= 0.01) {
+                    debtorIndex++;
+                }
+            }
+
+            let resultHTML = '<p class="balance-info"><b>1인당 평균 부담 금액:</b> ' + Math.round(perPersonCost).toLocaleString() + '원</p>';
+            resultHTML += '<ul>';
+
+            if (transactions.length === 0) {
+                resultHTML += '<li>정산할 금액이 없습니다.</li>';
+            } else {
+                transactions.forEach(t => {
+                    resultHTML += `<li><b>${t.from}</b>이 <b>${t.to}</b>에게 <b>${t.amount.toLocaleString()}원</b> 지불해야 함.</li>`;
+                });
+            }
+            
+            resultHTML += '</ul>';
+            resultDiv.innerHTML = resultHTML;
+        }
+        
+        addPayer();
+    </script>
+</body>
+</html>
